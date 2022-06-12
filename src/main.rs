@@ -23,7 +23,7 @@ struct ResponseError {}
 #[serde(rename_all = "camelCase")]
 struct Response {
     option_chain: OptionChain,
-    error: ResponseError,
+    error: Option<ResponseError>,
 }
 
 #[tokio::main]
