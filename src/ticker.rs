@@ -23,10 +23,10 @@ struct ResponseError {}
 #[serde(rename_all = "camelCase")]
 struct Response {
     option_chain: OptionChain,
-    error: Option<ResponseError>,
+    // error: Option<ResponseError>,
 }
 
-pub async fn new(ticker: String) -> Result<Quote, Box<dyn Error>> {
+pub async fn new(ticker: &str) -> Result<Quote, Box<dyn Error>> {
     let resp = reqwest::get(format!(
         "https://query2.finance.yahoo.com/v7/finance/options/{}",
         ticker
