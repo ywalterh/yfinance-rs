@@ -38,3 +38,17 @@ pub async fn new(ticker: &str) -> Result<Quote, Box<dyn Error>> {
     let quote = resp.option_chain.result[0].quote;
     Ok(quote)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn download_ticker() {
+        let under_test = new("AAPL").await;
+        assert!(under_test.unwrap().ask > 0f32);
+
+        let under_test = new("GOOG").await;
+        assert!(under_test.unwrap().ask > 0f32);
+    }
+}
