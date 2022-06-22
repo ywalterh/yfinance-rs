@@ -1,3 +1,4 @@
+use serde::Deserialize;
 use std::error::Error;
 
 #[derive(Default)]
@@ -12,7 +13,115 @@ pub struct Params {
     time_zone: String,
 }
 
-pub async fn new(ticker: &str, params: Option<Params>) -> Result<(), Box<dyn Error>> {
+#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Response {
+    pub chart: Chart,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Chart {
+    pub result: Vec<Result>,
+    pub error: std::option::Option<ResponseError>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+pub struct ResponseError {}
+
+#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Result {
+    pub meta: Meta,
+    pub timestamp: Vec<i64>,
+    pub indicators: Indicators,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Meta {
+    pub currency: String,
+    pub symbol: String,
+    pub exchange_name: String,
+    pub instrument_type: String,
+    pub first_trade_date: i64,
+    pub regular_market_time: i64,
+    pub gmtoffset: i64,
+    pub timezone: String,
+    pub exchange_timezone_name: String,
+    pub regular_market_price: f64,
+    pub chart_previous_close: f64,
+    pub previous_close: f64,
+    pub scale: i64,
+    pub price_hint: i64,
+    pub current_trading_period: CurrentTradingPeriod,
+    pub trading_periods: Vec<Vec<TradingPeriod>>,
+    pub data_granularity: String,
+    pub range: String,
+    pub valid_ranges: Vec<String>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CurrentTradingPeriod {
+    pub pre: Pre,
+    pub regular: Regular,
+    pub post: Post,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Pre {
+    pub timezone: String,
+    pub end: i64,
+    pub start: i64,
+    pub gmtoffset: i64,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Regular {
+    pub timezone: String,
+    pub end: i64,
+    pub start: i64,
+    pub gmtoffset: i64,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Post {
+    pub timezone: String,
+    pub end: i64,
+    pub start: i64,
+    pub gmtoffset: i64,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TradingPeriod {
+    pub timezone: String,
+    pub end: i64,
+    pub start: i64,
+    pub gmtoffset: i64,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Indicators {
+    pub quote: Vec<Quote>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Quote {
+    pub open: Vec<f64>,
+    pub volume: Vec<i64>,
+    pub high: Vec<f64>,
+    pub close: Vec<f64>,
+    pub low: Vec<f64>,
+}
+
+pub async fn new(ticker: &str, params: Option<Params>) -> std::result::Result<Response, Box<dyn Error>> {
     let client = reqwest::Client::new();
     let params = params.unwrap_or(Params::default());
 
@@ -33,11 +142,10 @@ pub async fn new(ticker: &str, params: Option<Params>) -> Result<(), Box<dyn Err
         ])
         .send()
         .await?
-        .text()
+        .json::<Response>()
         .await?;
 
-    println!("{}", resp);
-    Ok(())
+    Ok(resp)
 }
 
 #[cfg(test)]
@@ -47,6 +155,6 @@ mod tests {
     #[tokio::test]
     async fn download_history() {
         let under_test = new("AAPL", None).await;
-        assert!(false);
+        under_test.unwrap();
     }
 }
